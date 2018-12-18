@@ -183,5 +183,3 @@ Therefore, to have a correct policy, we will need a lot of samples, which result
 Actor Critic: hybrid between value-based and policy-based algorithms
 
 Proximal Policy Gradients: ensures deviation from previous policy stays small.
-
-35.247.81.83
