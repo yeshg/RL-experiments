@@ -1,3 +1,7 @@
+---
+typora-root-url: ./img
+---
+
 # Evolution of Policy Gradient Methods
 
 ## Vanilla Policy Gradient Method (covers Actor-Critic)
@@ -150,5 +154,4 @@ The min operator is operated on both of these terms to get the final result. Thi
 
 Picture below shows the two cases that A might take (positive or negative, if 0 then no update):
 
-![](/Users/yeshg/RL/RL-experiments/Notes/img/ppo_min_explanation.png)
-
+![](/ppo_min_explanation.png)
