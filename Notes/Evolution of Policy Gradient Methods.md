@@ -97,6 +97,58 @@ end for
 
 TRPO solves the constrained optimization problem efficiently by using the **conjugate gradient**.
 
-F is Hessian
+From Numerical Optimization (a field of math), we can solve a KL Penalized Problem:
+
+1. Make linear approximation to objective, quadratic approximation to KL divergence term
+   - KL divergence has two arguments (the two probability distributions to find distance between)
+   - At the start point, distance is minimized if keeping one argument fixed. From there it seems to grow quadratically.
+   - Goal is to find matrix that defines this quadratic distance function.
+2. Solution to the KL Penalized problem is below:
+
+$\theta - \theta_{old} = \frac{1}{\beta} F^{-1}g$ where $F$ is the Fisher information matrix, $g$ is the policy gradient. F is the Hessian of L:
+
+$F = \frac{\partial^{2}}{\partial^{2}\theta}\overline{KL}_{\pi_{\theta_{old}}}(\pi_{\theta})|_{\theta=\theta_{old}}$
+
+However, computing Hessian is computationally expensive, as you have to compute n gradients if you have n parameters. Instead, we can use the conjugate gradient algorithm to solve the linear equation $F^{-1}g$ without explicitly finding the Hessian $F$. For more on this, refer to textbook on numerical optimization. This is called hessian-free optimization.
+
+Overall, this is development of ideas:
+
+1. First we suggest optimizing the surrogate loss $L^{PG}$ or $L^{IS}$, but we found that instead using KL divergence to constrain the size of the update is better
+2. This created a harder optiization problem to solve (constrained vs unconstrained).
+   - We note that doing a quadratic and affine (linear) optimization to this problem  we get an update step that looks like $F^{-1} g$ (where F is Fisher info matrix and g is policy gradient)
+3. This is the same as something that was proposed before called Natural Gradient
+   - Solved for approximately by using conjugate gradient method.
+
+Alternative Approach: KL constraint can sometimes lead to undesirable trianing behavior, it owuld be better to include this extra constraint directly into our optimization objective. This is PPO.
 
 ## Proximal Policy Optimization (PPO)
+
+Let's build the objective funciton for PPO.
+
+First, we define the probability ratio $r_{t}(\theta) = \frac{\pi_{\theta}(a_{t}|s_{t})}{\pi_{\theta_{old}}(a_{t}|s_{t})}$. This will be somewhere from 0 to 1 if the action is less likely in the new policy than in the old.
+
+Recall objective function for TRPO: $\hat E_{t}[\frac{\pi_{\theta}(a_{t}|s_{t})}{\pi_{\theta_{old}}(a_{t}|s_{t})}\hat A_{t}]$. This is the same as $r_{t}(\theta)$ multiplied by the advantage function.
+
+So far, we have the same TRPO objective function just in a more readable form.
+
+Following is central objective function for PPO:
+
+$L^{CLIP}(\theta) = \hat E_{t}[min(r_{t}(\theta)\hat A_{t}, clip(r_{t}(\theta), 1 - \epsilon, 1 + \epsilon)\hat A_{t})]$
+
+Let's break it down. Firstly, we clearly see that the objective function that PPO optimizes is an expectation operator (so we are going to compute the objective function over batches of trajectories), hence the $\hat E_{t}$.
+
+The Expectation operator is taken over the minimum of two terms:
+
+- $r_{t}(\theta)\hat A_{t}$
+- $clip(r_{t}(\theta), 1 - \epsilon, 1 + \epsilon)\hat A_{t}$
+
+First term is our probability ratio $r_{t}(\theta)$ multiplied by advantage function. This is the default objective for policy gradients which pushes the policy towards actions that yeild a high positive advantage over the baseline.
+
+Second term is very similar, but it contains a truncated version of our probability ratio $r_{t}(\theta)$. This is done by the clip() function between $1-\epsilon$ and $1+\epsilon$ where $\epsilon$ is usually around 0.2 (it's a tunable hyperparameter).
+
+The min operator is operated on both of these terms to get the final result. This min operator has a crucial relationship with the sign of our advantage estimate $\hat A_{t}$.
+
+Picture below shows the two cases that A might take (positive or negative, if 0 then no update):
+
+![](/Users/yeshg/RL/RL-experiments/Notes/img/ppo_min_explanation.png)
+
