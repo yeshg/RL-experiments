@@ -155,3 +155,47 @@ The min operator is operated on both of these terms to get the final result. Thi
 Picture below shows the two cases that A might take (positive or negative, if 0 then no update):
 
 ![](/ppo_min_explanation.png)
+
+If the action was good, the advantage estimate is positive, AND if the same action already got updated in the previous step, we don't keep updating it too much or else it might get worse.
+
+If the action was bad, the advantage estimte will be negative, AND if the same action just became more probable in the previous step, we want to undo the last update.
+
+IN essence, PPO does same thing as TRPO - forces policy updates to be conservative if they move very far away from the current policy.
+
+The simple PPO objective function often outperforms the more complicated one in TRPO.
+
+### Rest of the PPO algorithm
+
+There are two alternating threads in PPO.
+
+In the first thread, the policy is interacting with the environment creating episode sequences for which we immediately calcualte the advantage estimates using our fitted baselines estimate for the state values.
+
+Every so many episodes, a second thread is going to collect all that experience and run gradient descent on the policy network using the clipped PPO objective.
+
+Below is OpenAI 5 training setup:
+
+![](/openai5.png)
+
+The two threds can be decoupled from each other by using a recent copy of the model (pink data-store) that is given to thousands of remote workers (top-left blue blocks), and a GPU cluster (green block) that runs gradient descent on the network.
+
+The final loss function is the sum of the clipped PPO objective function described earlier plus two additional terms:
+
+$L_{t}^{PPO}(\theta) = \hat E_{t}[L_{t}^{CLIP}(\theta) - c_{1}L_{t}^{VF}(\theta) + c_{2}S[\pi_{\theta}](s_{\theta})]$
+
+The first term: $c_{1}L_{t}^{VF}(\theta)$ is in charge of updating the baseline network (so estimating how good or bad it is to be in this state). Mathematically, what is the aveage amount of discounted reward that I expect to get?
+
+![](/ppo_actor_critic_style.png)
+
+The value estimation portion of the network (left side) shares a large portion of its parameters with the policy network. As a result, the feature extraction portions of these networks are shared.
+
+The second term: $c_{2}S[\pi_{\theta}](s_{\theta})$ is in charge of ensuring that we explore the environment (recall the exploration/exploitation tradeoff). This term is an entropy term that pushes the policy to behave more randomly until other parts of the objective start dominating.
+
+Hyperparameters $c_{1}$ and $c_{2}$ determine how each term weigh into the loss.
+
+In contrast to discrete aciton policies that output the action choice probabilities, the PPO head outputs the parameters of a Gaussian distribution for each available action type. When running the agent in training mode, it will sample from these distributions to get a continuous output value for each action head.
+
+## Conclusion
+
+PPO was developed to get rid of a lot of the very nasty code in a lot of other algorithms. It's much easier to tune than other alternatives.
+
+It has the stability and reliability of TRPO while being much easier to implement.
