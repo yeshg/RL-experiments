@@ -159,9 +159,70 @@ There are four main functions of note:
 
    ​	$Q^{\pi}(s,a) = \Epsilon_{\tau \sim \pi} [R(\tau) | s_{0} = s, a_{0} = a]$
 
-3. **Optimal Value Function**, $V^{*}(s)$ gives the expected return if you start in state $s$, and always act according to the *optimal* policy $\pi$:
+3. **Optimal Value Function**, $V^{*}(s)​$ gives the expected return if you start in state $s​$, and always act according to the *optimal* policy $\pi​$:
 
-   ​	$Q^{\pi}(s,a) = max_{\pi}\space \Epsilon_{\tau \sim \pi} [R(\tau) | s_{0} = s, a_{0} = a]​$	
+   ​	$V^{*}(s) = max_{\pi}\space \Epsilon_{\tau \sim \pi} [R(\tau) | s_{0} = s]$	
 
-4. **Optimal Action-Value Function**, $Q^{*}(s,a) = max_{\pi}\space \Epsilon_{\tau \sim \pi} [R(\tau) | s_{0} = s, a_{0} = a]​$
+4. **Optimal Action-Value Function**, $Q^{*}(s,a) = max_{\pi}\space \Epsilon_{\tau \sim \pi} [R(\tau) | s_{0} = s, a_{0} = a]​$, gives the expected return if you start in a state $s​$, take an arbitrary action $a​$, and then forever after act according to the optimal policy in the environment.
 
+Note that the above functions don't depend on a time argument. This works only for infinite-horizon disocunted return... if we wanted to calculate finite-horizon undiscounted return we would need a value function that accepts time as an argument.
+
+### Connection between value function and action-value (Q) function
+
+$V^{\pi}(s) = \Epsilon _{a \sim \pi}[Q^{\pi}(s,a)]$
+
+$V^{*}(s) = \max _{a} \Epsilon _{a \sim \pi}[Q^{*}(s,a)]$
+
+## Optimal Q-Function and the Optimal Action
+
+There is an important connection between optimal action-value function $Q^{*}(s,a)$ and the action selected by the optimal policy. By definition, $Q^{*}(s,a) $ gives the expected return for starting in state $s$, taking an arbitrary action $a$, and then acting according to the optimal policy forever after.
+
+The optimal policy in $s$ will select whichever action maximizes the expected return from starting in $s$:
+
+$a^{*}(s) = arg \space max_{a} Q^{*}(s,a)$.
+
+## Bellman Equations
+
+All four of the value function variants obey special self-consistency equations called **Bellman Equations**. The basic idea behind the bellman equations is *the value of your starting point is the reward you expect to get from being there plus the value of wherever you land next*.
+
+Bellman equations for on-policy value functions are
+
+$V^{\pi}(s) = \Epsilon_{a \sim \pi,s'\sim P}[r(s,a)+\gamma V^{\pi}(s')])​$,
+
+$Q^{\pi}(s,a) = \Epsilon_{s' \sim P}[r(s,a)+\gamma \Epsilon_{a' \sim \pi}[Q^{\pi}(s',a')]]​$.
+
+Here, $s' \sim P$ is short for $s' \sim P(\cdot|s, a)$. This means that the next state $s'$ is sampled from the environment's transition rules; $a \sim \pi$ is shorthand for $s' \sim \pi(\cdot | s)$; and $a' \sim \pi$ is short for $a' \sim \pi(\cdot | s')$.
+
+Bellman equations for optimal value functions are similar, they just include the max operator (choosing the action that is optimal):
+
+$V^{*}(s) = max_{a} \space\Epsilon_{a \sim \pi}[r(s,a)+\gamma V^{*}(s')])$,
+
+$Q^{*}(s,a) = \Epsilon_{s' \sim P}[r(s,a)+\gamma \space max_{a'} \space Q^{*}(s',a')]$.
+
+**Bellman backup** refers to the right-hand side of the bellman equation (reward + next value).
+
+## Advantage Functions
+
+**Advantage functions** are used to describe how good an action is on a relative sense. The advantage function $A^{\pi}(s,a)$ corresponding to a policy $\pi$ describes how much better it is to take a specific action $a$ in state $s$, over randomly selecting an action according to $\pi(\cdot | s)$, assuming you act according to the policy $\pi$ forever after. Mathematically it is described as follows:
+
+$A^{\pi}(s,a) = Q^{\pi}(s,a) - V^{\pi}(s)$.
+
+The advantage function is crucial for policy gradient methods.
+
+## Formalizing Rl into MDP
+
+A Markov Decision Process (MDP) is a 5-tuple, $<S,A,R,P,\rho_{0}>$ where
+
+- $S​$ is the set of all valid states
+- $A$ Is the set of all valid actions
+- $R : S \times A \times S \to \mathbb{R}​$ is the reward function, with $r_{t} = R(s_{t}, a_{t}, s_{t+1})​$
+- $P : S \times A \to \cal P$ is the transition probability function, with $P(s'|s,a)$ being the probability of transitioning into state $s'$ if you start in state $s$ and take action $a$.
+- $\rho_{0}$ is the starting state distribution.
+
+The name Markov Decision Process refers to the Markov property, which states that transitions only depend on the most recent state and action, and no prior history.
+
+# Types of RL Algorithms
+
+from: https://spinningup.openai.com/en/latest/spinningup/rl_intro2.html
+
+![](/Users/yeshg/RL/RL-experiments/Notes/img/rl_algorithms_9_15.svg)
