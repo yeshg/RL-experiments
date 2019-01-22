@@ -51,7 +51,7 @@ DDPG is a popular off-policy actor-critic method is a deep variant of the determ
 
 Infinite Horizon Markov decision process (MDP) defined by the tuple $(S,A,p,r)$, where the state space $S$ and the action space $A$ are continuous and the unknown state transition probability $p : S \times S \times A \to  [0,\infty)$ represents the probability of the next state $s_{t+1}$ given the current state $s_{t}$ and the action $a_{t}$.
 
-$p_{\pi}(s_{t})$ and $p_{\pi}(s_{t},a_{t})$ to denote the state and state-action marginals of the trajectory distribution induced by the policy noted by $\pi(a_{t},s_{t})$. 
+$p_{\pi}(s_{t})​$ and $p_{\pi}(s_{t},a_{t})​$ to denote the state and state-action marginals of the trajectory distribution induced by the policy noted by $\pi(a_{t},s_{t})​$. 
 
 ### Maximum Entropy Reinforcement Learning
 
@@ -84,5 +84,46 @@ This causes the value function to also be slightly different as we need to inclu
 
 $V^{\pi}(s) = E_{T \sim \pi} [\sum \limits_{t=0}^{\infty}\gamma^{t}(R(s_{t},a_{t},s_{t+1}) + \alpha \cal H(\pi(\cdot|s_{t}))) \mid s_{0} = 0]$
 
-The Q-function $Q^{\pi}$ is changed to include the entropy bonuses from every timestep except the first:
+The Q-function $Q^{\pi}$ is changed to include the entropy bonuses from every timestep *except* the first:
 
+$Q^{\pi}(s,a) = E_{\tau \sim \pi}[\sum \limits_{t=0}^{\infty}\gamma^{t}R(s_{t},a_{t},s_{t+1}) + \alpha \sum \limits_{t=1}^{\infty}\gamma^{t}H(\pi(\cdot|s_{t}))|s_{0}=s,a_{0}=a]$
+
+Then, we can connect $V^{\pi}(s) = E_{a \sim \pi}[Q^{\pi}(s,a)] + \alpha H(\pi(\cdot|s))​$
+
+The Bellman equation for $Q^{\pi}$ is:
+
+$Q^{\pi}(s,a) = E_{s' \sim P}[R(s,a,s')+\gamma(Q^{\pi}(s',a')+\alpha H(\pi(\cdot | s')))]$
+
+$\implies Q^{\pi}(s,a) = E_{s' \sim P}(R(s,a,s') + \gamma V^{\pi}(s'))$.
+
+## Soft-Actor-Critic
+
+SAC is composed of:
+
+- policy $\pi_{\theta}$
+- two Q-functions (value-action functions) $Q_{\phi_{1}},Q_{\phi_{2}}$
+- value function $V_{\psi}$
+
+**Learning Q**: Q-functions learned by MSBE (mean square bellman error) minimization. They use a **target value network** to form the Bellman backups. Both Q-functions use the same target and have the same loss function format:
+
+$L(\phi_{i},\mathcal{D}) = E_{(s,a,r,s',d) \sim \mathcal{D}}[(Q_{\phi_{i}}(s,a) - (r+\gamma(1-d)V_{\psi_{targ}}(s')))^{2}]$
+
+The aforementioned target value network is obtained by polyak averaging the value network parameters over the course of training.
+
+**Learning V:** Value function is learned by using the previously established connection between $Q^{\pi}$ and $V^{\pi}$. This can be re-written using the definition of entropy:
+
+$V^{\pi}(s) = E_{a \sim \pi}[Q^{\pi}(s,a)] + \alpha H(\pi(\cdot|s))$
+
+$= V^{\pi}(s) = E_{a \sim \pi}[Q^{\pi}(s,a) - \alpha \space log \space \pi(a|s)]$
+
+The RHS can be approximated by sampling from the policy:
+
+$V^{\pi}(s) \approx Q^{\pi}(s,\tilde{a}) - \alpha \space log \space \pi(\tilde{a} | s), \tilde a \sim \pi(\cdot | s) $
+
+SAC sets up a mean-squared error loss for $V_{\psi}$ based on this approximation, and uses clipped double-Q like TD3 for learning the value function, and takes the minimum Q-value between the two approximators. Final SAC loss for value function parameters:
+
+$L(\psi,\mathcal{D}) = E_{s \sim, \mathcal{D}, a \sim \pi_{\theta}}[(V_{\psi}(s)-(min_{i=1,2}Q_{\phi_{i}}(s,\tilde{a}) - \alpha \space log \space \pi_{\theta}(\tilde{a}|s)))^2{}]$
+
+The important thing here is that we don't use actions from the replay buffer. The actions we sample come fresh from the current version of the policy.
+
+**Learning the Policy $\pi$**: Policy should act to maxmimize expected future return plus expected future entropy. The

@@ -183,7 +183,7 @@ $a^{*}(s) = arg \space max_{a} Q^{*}(s,a)$.
 
 ## Bellman Equations
 
-All four of the value function variants obey special self-consistency equations called **Bellman Equations**. The basic idea behind the bellman equations is *the value of your starting point is the reward you expect to get from being there plus the value of wherever you land next*.
+All four of the value function variants obey special self-consistency equations called **Bellman Equations**. The basic idea behind the bellman equations is *<u>the value of your starting point is the reward you expect to get from being there plus the value of wherever you land next</u>*.
 
 Bellman equations for on-policy value functions are
 
