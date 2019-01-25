@@ -226,3 +226,67 @@ The name Markov Decision Process refers to the Markov property, which states tha
 from: https://spinningup.openai.com/en/latest/spinningup/rl_intro2.html
 
 ![](/Users/yeshg/RL/RL-experiments/Notes/img/rl_algorithms_9_15.svg)
+
+## Model-Free vs Model-Based RL
+
+Question over whether or not the agent has access to (or learns) a **model** of the environment. A model of the environment is a function that predicts state transitions and rewards.
+
+The main upside to Model-based RL is that it allows the agent to plan by thinking ahead, seeing what would happen for a range of possible choices, and explicitly deciding between its options. The agents can then distill the results from planning ahead into a learned policy. AlphaZero (the RL algo that became superhuman at Chess and Shogi) is a famous example of a model-based approach. In general, model-based approaches have a substantial improvement in sample efficiency over methods that don't have a model.
+
+The main downside to Model-based approaches is that a **ground-truth model of the environment is usually not available** to the agent, so an agent that wants to use a model would need to learn a model from experience. This creates several challenges, the biggest one being that the bias in the model can be exploited by the agent, resulting in an agent that performs well with respect to the learned model but behaves sub-optimally for the real environment (kinda like overfitting). Model-learning is hard, so efforts to learn it can fail to pay off.
+
+Algorithms which use a model are called **model-based**, those that don't are **model-free**. Model-free methods give up the potential gains in sample efficiency from using a model but tend to be easier to implement and tune.
+
+## What to Learn
+
+There are several things that RL algorithms can learn:
+
+- Policies (can be stochastic or deterministic)
+- Action-value functions (aka Q-functions)
+- value functions
+- And/or environment models (model-based RL)
+
+### Learning in Model-Free RL
+
+There are two main approaches to representing and training agents with model-free RL, as well as a third hybrid approach.
+
+#### Policy Optimization
+
+Methods in this approach represent a policy as $\pi_{\theta}(a|s)$, where $\theta$ are the parameters. $\theta$ can be optimized directly either by gradient ascent on the performance objective $J(\pi_{\theta})$, or indirectly by maximizing local approximations of $J(\pi_{\theta})$. This optimization is **performed <u>on-policy</u>, meaning that each update only uses data collected while acting according to the most recent version of the policy**. Policy optimization usually involves learning an approximation $V_{\phi}(s)$ for the on-policy value function $V^{\pi}(s)$, which is used for figuring out how to update the policy.
+
+Some examples of policy optimization methods are:
+
+- [A2C](https://arxiv.org/abs/1602.01783) / [A3C](https://arxiv.org/abs/1602.01783) - perform gradient ascent to directly maximize the performance objective
+- [PPO](https://arxiv.org/abs/1707.06347) - updates indrectly maximize performance by instead maximizing a *surrogate objective* function that gives a safe estimate for how much $J(\pi_{\theta})$ will change as a result of the update (so as to not destroy the policy)
+
+#### Q-Learning
+
+Q-functions are Action-value functions. Q-learning methods learn an approximation $Q_{\theta}(s,a)$ for the optimal action-value function $Q^{*}(s,a)$. They typically use a function based on the Bellman Equation (basic idea of bellman equation is "the value of your starting point is the reward you expect to get from being there plus the value of wherever you land next"). This optimization is almost always performed **off-policy, meaning that each update can use data collected at any point during training** (leading to the idea of experience replay buffers), regardless of how the agent was choosing to explore the environment when the data was obtained. The corresponding policy is obtained via the connection between the optimal policy function $\pi^{*}$ and the optimal Action-Value function $Q^{\theta}$:
+
+The actions taken by the Q-learning agent are given by $a(s) = arg \space max_{a} \space Q_{\theta}(s,a)$.
+
+Some examples of Q-learning methods include:
+
+- [DQN](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf), the deep-q-learning algo that launched Deep RL
+- [C51](https://arxiv.org/abs/1707.06887), a variant that learns a distribution over return whose expectation is $Q^{*}$
+
+#### Trade-offs between Policy Optimization and Q-Learning
+
+Primary strength of policy optimization methods is that they are principled - *you directly optimize for the thing you want*. This makes them stable and reliant. Q-Learning methods only *indirectly* optimize for agent (because they train $Q_{\theta}$ to satisfy a self-consistency (Bellman) equation). Q-learning methods are not as stable, but are substantially more sample efficient when they do work because they reuse data more effectively than policy optimization techniques.
+
+#### Interpolating Between Policy Optimization and Q-Learning
+
+Surprisingly (and a good thing), policy optimization and Q-learning are not incompatible (and can be [equivalent](https://arxiv.org/abs/1704.06440)). There are several algorithms that lie between them, and try to trade-off the strengths and weaknesses between them.
+
+Examples:
+
+- [DDPG](https://arxiv.org/abs/1509.02971), an algorithm which concurrently learns a deterministic policy and a Q-function by using each to improve the other
+- [SAC](https://arxiv.org/abs/1801.01290), a variant which uses stochastic policies, entropy regularization, and a few other tricks to stabilize learning and score higher than DDPG on standard benchmarks.
+
+### Learning in Model-Based RL
+
+There aren't a small number of easy-to-define clusters of methods for model-based RL: there are many independent ways of using models. A few examples below.
+
+Background: Pure-Planning: The most basic approach *never* explicitly represents the policy. Instead it uses pure planning techniques like model-predictive control ([MPC](https://en.wikipedia.org/wiki/Model_predictive_control)) to select actions. In MPC, each time the agent observes the environment, it computes a plan which is optimal with respect to the model, where the *plan describes all actions to take over some fixed window of time after the present* (Future reward beyond the horizon may be considered by the planning algorithm through the use of a learned value function). The agent then executes the first action of the plan, and immediately discards the rest of it. It computes a new plan each time it prepares to interact with the environment to avoid using an action froma a plan with a shorter-than-desired planning horizon.
+
+- The MBMF work explores MPC with learned environment models on some standard benchmark tasks for deep RL.

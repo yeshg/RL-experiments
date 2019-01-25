@@ -114,16 +114,21 @@ The aforementioned target value network is obtained by polyak averaging the valu
 
 $V^{\pi}(s) = E_{a \sim \pi}[Q^{\pi}(s,a)] + \alpha H(\pi(\cdot|s))$
 
-$= V^{\pi}(s) = E_{a \sim \pi}[Q^{\pi}(s,a) - \alpha \space log \space \pi(a|s)]$
+$= V^{\pi}(s) = E_{a \sim \pi}[Q^{\pi}(s,a) - \alpha \space log \space \pi(a|s)]​$
 
 The RHS can be approximated by sampling from the policy:
 
 $V^{\pi}(s) \approx Q^{\pi}(s,\tilde{a}) - \alpha \space log \space \pi(\tilde{a} | s), \tilde a \sim \pi(\cdot | s) $
 
-SAC sets up a mean-squared error loss for $V_{\psi}$ based on this approximation, and uses clipped double-Q like TD3 for learning the value function, and takes the minimum Q-value between the two approximators. Final SAC loss for value function parameters:
+SAC sets up a mean-squared error loss for $V_{\psi}​$ based on this approximation, and uses clipped double-Q like TD3 for learning the value function, and takes the minimum Q-value between the two approximators. Final SAC loss for value function parameters:
 
-$L(\psi,\mathcal{D}) = E_{s \sim, \mathcal{D}, a \sim \pi_{\theta}}[(V_{\psi}(s)-(min_{i=1,2}Q_{\phi_{i}}(s,\tilde{a}) - \alpha \space log \space \pi_{\theta}(\tilde{a}|s)))^2{}]$
+$L(\psi,\mathcal{D}) = E_{s \sim, \mathcal{D}, a \sim \pi_{\theta}}[(V_{\psi}(s)-(min_{i=1,2}Q_{\phi_{i}}(s,\tilde{a}) - \alpha \space log \space \pi_{\theta}(\tilde{a}|s)))^2{}]​$
 
 The important thing here is that we don't use actions from the replay buffer. The actions we sample come fresh from the current version of the policy.
 
-**Learning the Policy $\pi$**: Policy should act to maxmimize expected future return plus expected future entropy. The
+**Learning the Policy $\pi​$**: Policy should act to maxmimize expected future return plus expected future entropy. The
+
+
+
+Ref: [Reparametrization Trick](https://arxiv.org/abs/1312.6114)
+
