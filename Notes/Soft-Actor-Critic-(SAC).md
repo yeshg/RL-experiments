@@ -132,3 +132,8 @@ The important thing here is that we don't use actions from the replay buffer. Th
 
 Ref: [Reparametrization Trick](https://arxiv.org/abs/1312.6114)
 
+OpenAI SpinningUp implementation: https://spinningup.openai.com/en/latest/_modules/spinup/algos/sac/sac.html#sac
+
+OpenAI SpinningUp explanation: https://spinningup.openai.com/en/latest/algorithms/sac.html#entropy-regularized-reinforcement-learning
+
+PyTorch tutorial: https://pytorch.org/tutorials/beginner/pytorch_with_examples.html

@@ -287,6 +287,37 @@ Examples:
 
 There aren't a small number of easy-to-define clusters of methods for model-based RL: there are many independent ways of using models. A few examples below.
 
-Background: Pure-Planning: The most basic approach *never* explicitly represents the policy. Instead it uses pure planning techniques like model-predictive control ([MPC](https://en.wikipedia.org/wiki/Model_predictive_control)) to select actions. In MPC, each time the agent observes the environment, it computes a plan which is optimal with respect to the model, where the *plan describes all actions to take over some fixed window of time after the present* (Future reward beyond the horizon may be considered by the planning algorithm through the use of a learned value function). The agent then executes the first action of the plan, and immediately discards the rest of it. It computes a new plan each time it prepares to interact with the environment to avoid using an action froma a plan with a shorter-than-desired planning horizon.
+#### Background: Pure-Planning:
 
-- The MBMF work explores MPC with learned environment models on some standard benchmark tasks for deep RL.
+The most basic approach *never* explicitly represents the policy. Instead it uses pure planning techniques like model-predictive control ([MPC](https://en.wikipedia.org/wiki/Model_predictive_control)) to select actions. In MPC, each time the agent observes the environment, it computes a plan which is optimal with respect to the model, where the *plan describes all actions to take over some fixed window of time after the present* (Future reward beyond the horizon may be considered by the planning algorithm through the use of a learned value function). The agent then executes the first action of the plan, and immediately discards the rest of it. It computes a new plan each time it prepares to interact with the environment to avoid using an action froma a plan with a shorter-than-desired planning horizon.
+
+- The [MBMF](https://sites.google.com/view/mbmf) work explores MPC with learned environment models on some standard benchmark tasks for deep RL.
+
+#### Expert Iteration
+
+An improvement upon pure-planning involves using and learning an explicit representation of the policy, $\pi_{\theta}(a|s)$. The agent uses a planning algorithm (like Monte Carlo Tree Search) in the model and generates candidate actions for the plan by sampling from its current policy. The planning algorithm produces an action which is better than what the policy alone would have produced (hence being called an "expert" relative to the policy). Then, the policy is updated to produce an action more like the planning algorithm's output.
+
+- The [Exlt](https://arxiv.org/abs/1705.08439) algorithm uses this approach to train deep neural networks to play Hex
+- [AlphaZero](https://arxiv.org/abs/1712.01815) also falls under this approach
+
+#### Data Augmentation for Model-Free Methods (*imagination*)
+
+In these approaches, you use a model-free RL algorithm to train a policy or Q-function, but either
+
+1. Augment real experiences with ficitcious ones in updating the agent
+2. OR only use fictitious experiences for updating the agent
+
+Examples:
+
+- [MBVE](https://arxiv.org/abs/1803.00101) - augmenting real experiences with ficticious ones
+- [World Models](https://worldmodels.github.io) - using purely ficticious experience to train the agent, which they call "training in the dream"
+
+#### Embedded Planning and Loops into Policies
+
+Another approach treats the planning procedure as a subroutine of the policy - making complete plans side information for the policy which is trained with any standard model-free algorithm. The key concept is that in this framework, the policy can learn to choose how and when to use the plans. This makes model bia less of a problem, because if the model is bad for planning in some states the policy can choose to ignore it.
+
+- [I2As](https://arxiv.org/abs/1707.06203) is an architecture for RL that shows several examples of this approach.
+
+https://spinningup.openai.com/en/latest/spinningup/rl_intro2.html
+
+https://spinningup.openai.com/en/latest/spinningup/rl_intro3.html
